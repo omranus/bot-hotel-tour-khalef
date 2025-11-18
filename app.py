@@ -520,3 +520,4 @@ def accueil():
         // Focus automatique
         document.getElementById('user-input').focus();
     </script>
+
