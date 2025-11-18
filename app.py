@@ -1,13 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import re
 import requests
 import os
+from datetime import datetime
 
 app = Flask(__name__)
-
-# ⚠️ REMPLACER PAR VOS VRAIS JETONS FACEBOOK
-FACEBOOK_TOKEN = "VOTRE_JETON_ACCES_FACEBOOK"
-VERIFY_TOKEN = "hotel_tour_khalef_2025"
 
 # Données basées sur votre Excel
 TARIFS = {
@@ -50,15 +47,17 @@ def analyser_devis(message_texte):
         formule = "All in soft" 
     elif "all in" in message_texte.lower():
         formule = "All in"
+    elif "petit déjeuner" in message_texte.lower() or "pd" in message_texte.lower():
+        formule = "LPD"
 
     # Détection période
-    periode_index = 2
-    if "novembre" in message_texte.lower(): periode_index = 0
-    elif "décembre" in message_texte.lower() or "dec" in message_texte.lower(): periode_index = 2
-    elif "janvier" in message_texte.lower(): periode_index = 3
-    elif "février" in message_texte.lower() or "fevrier" in message_texte.lower(): periode_index = 4
-    elif "mars" in message_texte.lower(): periode_index = 6
-    elif "avril" in message_texte.lower(): periode_index = 7
+    periode_index = 2  # Décembre par défaut
+    if "novembre" in message_texte.lower(): periodo_index = 0
+    elif "décembre" in message_texte.lower() or "dec" in message_texte.lower(): periodo_index = 2
+    elif "janvier" in message_texte.lower(): periodo_index = 3
+    elif "février" in message_texte.lower() or "fevrier" in message_texte.lower(): periodo_index = 4
+    elif "mars" in message_texte.lower(): periodo_index = 6
+    elif "avril" in message_texte.lower(): periodo_index = 7
 
     # Détection personnes
     personnes = re.search(r'(\d+)\s*(?:personne|adulte|voyageur)', message_texte)
@@ -71,10 +70,10 @@ def analyser_devis(message_texte):
     # Préparation réponse
     reponse = f"""🏨 **HOTEL TOUR KHALEF** ⭐⭐⭐⭐⭐
 
-📋 Formule : {formule}
-📅 Période : {PERIODES[periode_index]}
-👥 Personnes : {nb_personnes}
-🌙 Nuits : {duree_sejour}
+📋 **Formule :** {formule}
+📅 **Période :** {PERIODES[periode_index]}
+👥 **Personnes :** {nb_personnes}
+🌙 **Nuits :** {duree_sejour}
 
 💰 **DEVIS : {prix_total}€**
 
@@ -84,65 +83,192 @@ def analyser_devis(message_texte):
     
     return reponse
 
-# ROUTE POUR LA VÉRIFICATION FACEBOOK
-@app.route('/webhook', methods=['GET'])
-def verifier_webhook():
-    hub_verify_token = request.args.get('hub.verify_token')
-    hub_challenge = request.args.get('hub.challenge')
-    
-    if hub_verify_token == VERIFY_TOKEN:
-        print("✅ Webhook Facebook vérifié!")
-        return hub_challenge
-    return 'Token invalide', 403
-
-# ROUTE POUR RECEVOIR LES MESSAGES FACEBOOK
-@app.route('/webhook', methods=['POST'])
-def recevoir_messages():
-    data = request.json
-    
-    if data.get('object') == 'page':
-        for entry in data['entry']:
-            for messaging_event in entry.get('messaging', []):
-                if messaging_event.get('message'):
-                    sender_id = messaging_event['sender']['id']
-                    message_text = messaging_event['message'].get('text', '')
-                    
-                    print(f"📩 Message de {sender_id}: {message_text}")
-                    
-                    # Analyser le message et calculer devis
-                    reponse_bot = analyser_devis(message_text)
-                    
-                    # Envoyer la réponse sur Facebook
-                    envoyer_reponse_facebook(sender_id, reponse_bot)
-    
-    return 'OK', 200
-
-def envoyer_reponse_facebook(recipient_id, message_texte):
-    """Envoie la réponse vers Facebook Messenger"""
-    url = f"https://graph.facebook.com/v17.0/me/messages?access_token={FACEBOOK_TOKEN}"
-    
-    data = {
-        "recipient": {"id": recipient_id},
-        "message": {"text": message_texte}
-    }
-    
-    try:
-        response = requests.post(url, json=data)
-        print(f"📤 Réponse envoyée à Facebook - Status: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Erreur envoi Facebook: {e}")
-
-# PAGE D'ACCUEIL POUR TEST
+# PAGE PRINCIPALE AVEC CHAT
 @app.route('/')
 def accueil():
     return """
-    <h1>🤖 Bot Facebook - Hotel Tour Khalef</h1>
-    <p><strong>✅ Prêt pour Facebook Messenger!</strong></p>
-    <p>URL Webhook: <code>https://votre-url.com/webhook</code></p>
-    <p>Testez l'analyse: <a href="/test?message=du 15 au 22 décembre pour 2 personnes">Exemple de test</a></p>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Bot - Hotel Tour Khalef</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .bot-message {
+            background: white;
+            border: 1px solid #ddd;
+        }
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
+        #user-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+        .examples {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .example-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>🤖 Hotel Tour Khalef - Assistant Devis</h2>
+            <p>Je vous aide à calculer votre devis automatiquement</p>
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">
+                👋 Bonjour ! Je suis l'assistant de l'Hotel Tour Khalef.<br>
+                Dites-moi votre demande de séjour et je vous préparerai un devis immédiatement !
+            </div>
+        </div>
+        
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Ex: Je veux réserver du 15 au 20 décembre pour 2 personnes..." autofocus>
+            <button onclick="sendMessage()">Envoyer</button>
+        </div>
+    </div>
+
+    <div class="examples">
+        <p><strong>Exemples rapides :</strong></p>
+        <button class="example-btn" onclick="setExample('du 15 au 22 décembre pour 2 personnes avec petit déjeuner')">Décembre - 2 pers - PD</button>
+        <button class="example-btn" onclick="setExample('demi-pension pour 3 personnes en février 7 nuits')">Février - 3 pers - DP</button>
+        <button class="example-btn" onclick="setExample('all in soft pour 4 personnes en avril')">Avril - 4 pers - All in</button>
+    </div>
+
+    <script>
+        function setExample(text) {
+            document.getElementById('user-input').value = text;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // Ajouter le message de l'utilisateur
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Envoyer au serveur
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage(data.reponse, 'bot');
+            })
+            .catch(error => {
+                addMessage('Désolé, une erreur est survenue.', 'bot');
+            });
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = text.replace(/\\n/g, '<br>');
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Enter key support
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
     """
 
-# ROUTE DE TEST
+# ROUTE POUR LE CHAT
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.json
+    message_utilisateur = data.get('message', '')
+    
+    reponse_bot = analyser_devis(message_utilisateur)
+    
+    return jsonify({
+        'reponse': reponse_bot,
+        'status': 'success'
+    })
+
+# Route de test existante
 @app.route('/test')
 def tester_analyse():
     message = request.args.get('message', 'du 15 au 22 décembre pour 2 personnes')
@@ -150,5 +276,6 @@ def tester_analyse():
     return f"<pre>{reponse}</pre>"
 
 if __name__ == '__main__':
-    print("🚀 Bot Facebook Hotel Tour Khalef - Démarrage...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print("🚀 Bot Chat Hotel Tour Khalef - Démarrage...")
+    app.run(host='0.0.0.0', port=port, debug=False)
