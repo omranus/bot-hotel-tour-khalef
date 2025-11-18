@@ -104,13 +104,14 @@ def analyser_devis(message_texte):
 💰 **DEVIS ESTIMÉ : {prix_total} TND**
 
 📧 **Réservations :** marouane.tefifha@tour-khalef.com
-📞 **Notre équipe vous contacte sous 30 minutes pour confirmation !**
+🌐 **Site :** www.tour-khalef.com
+📞 **Notre équipe vous contacte sous 30 minutes !**
 
-_⚠️ Ce calcul est une estimation basée sur nos tarifs Winter 2025-2026_"""
+_⚠️ Estimation basée sur nos tarifs Winter 2025-2026_"""
 
     return reponse
 
-# PAGE PRINCIPALE AVEC CHAT
+# PAGE PRINCIPALE AVEC CHAT - DESIGN TOUR KHALEF
 @app.route('/')
 def accueil():
     return """
@@ -119,131 +120,330 @@ def accueil():
 <head>
     <title>Assistant Devis - Hotel Tour Khalef</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        :root {
+            --turquoise: #40E0D0;
+            --turquoise-fonce: #20B2AA;
+            --turquoise-clair: #AFEEEE;
+            --blanc: #FFFFFF;
+            --noir: #2C3E50;
+            --gris-clair: #F8F9FA;
+            --gris: #E9ECEF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--turquoise-clair) 0%, var(--blanc) 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
         }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--noir);
+            margin-bottom: 10px;
+        }
+        
+        .logo-turquoise {
+            color: var(--turquoise-fonce);
+        }
+        
+        .slogan {
+            color: var(--noir);
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+        
         .chat-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: var(--blanc);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(64, 224, 208, 0.2);
             overflow: hidden;
+            margin-bottom: 20px;
         }
+        
         .chat-header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
+            background: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-fonce) 100%);
+            color: var(--blanc);
+            padding: 25px;
             text-align: center;
         }
+        
+        .chat-header h2 {
+            margin-bottom: 8px;
+            font-size: 1.5em;
+        }
+        
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 1em;
+        }
+        
         .chat-messages {
             height: 400px;
             overflow-y: auto;
-            padding: 20px;
-            background: #f8f9fa;
+            padding: 25px;
+            background: var(--gris-clair);
         }
+        
         .message {
-            margin-bottom: 15px;
-            padding: 12px;
-            border-radius: 10px;
-            max-width: 80%;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            border-radius: 18px;
+            max-width: 85%;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease-in;
         }
+        
         .user-message {
-            background: #007bff;
-            color: white;
+            background: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-fonce) 100%);
+            color: var(--blanc);
             margin-left: auto;
             text-align: right;
+            box-shadow: 0 4px 15px rgba(64, 224, 208, 0.3);
         }
+        
         .bot-message {
-            background: white;
-            border: 1px solid #ddd;
+            background: var(--blanc);
+            border: 2px solid var(--turquoise-clair);
+            color: var(--noir);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
+        
+        .chat-input-container {
+            padding: 20px;
+            background: var(--blanc);
+            border-top: 2px solid var(--gris);
+        }
+        
         .chat-input {
             display: flex;
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #ddd;
+            gap: 12px;
+            align-items: center;
         }
+        
         #user-input {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            margin-right: 10px;
+            padding: 15px 20px;
+            border: 2px solid var(--turquoise-clair);
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s ease;
         }
-        button {
-            background: #28a745;
-            color: white;
+        
+        #user-input:focus {
+            border-color: var(--turquoise);
+            box-shadow: 0 0 0 3px rgba(64, 224, 208, 0.1);
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, var(--turquoise) 0%, var(--turquoise-fonce) 100%);
+            color: var(--blanc);
             border: none;
-            padding: 12px 24px;
-            border-radius: 20px;
+            padding: 15px 25px;
+            border-radius: 25px;
             cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(64, 224, 208, 0.3);
         }
-        button:hover {
-            background: #218838;
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(64, 224, 208, 0.4);
         }
+        
         .examples {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
+            background: var(--blanc);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
+        
+        .examples h3 {
+            color: var(--noir);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
         .example-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            margin: 5px;
-            border-radius: 15px;
+            background: var(--gris-clair);
+            color: var(--noir);
+            border: 2px solid var(--turquoise-clair);
+            padding: 10px 18px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
         }
+        
+        .example-btn:hover {
+            background: var(--turquoise);
+            color: var(--blanc);
+            border-color: var(--turquoise);
+        }
+        
         .contact-info {
-            background: #d4edda;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
+            background: linear-gradient(135deg, var(--turquoise-clair) 0%, var(--blanc) 100%);
+            padding: 25px;
+            border-radius: 20px;
             text-align: center;
+            border: 2px solid var(--turquoise);
+            box-shadow: 0 5px 20px rgba(64, 224, 208, 0.2);
+        }
+        
+        .contact-info h3 {
+            color: var(--noir);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .contact-details {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--noir);
+            font-weight: 500;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-messages {
+                height: 350px;
+                padding: 15px;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 12px 15px;
+            }
+            
+            .contact-details {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .example-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h2>🤖 Hotel Tour Khalef - Assistant Devis</h2>
-            <p>Je calcule automatiquement vos devis en TND</p>
+    <div class="container">
+        <!-- En-tête avec logo -->
+        <div class="header">
+            <div class="logo">
+                TOUR <span class="logo-turquoise">KHALEF</span>
+            </div>
+            <div class="slogan">Hôtel de Charme & Spa ⭐⭐⭐⭐⭐</div>
         </div>
         
-        <div class="chat-messages" id="chat-messages">
-            <div class="message bot-message">
-                👋 Bonjour ! Je suis l'assistant devis de l'Hotel Tour Khalef.<br>
-                Je peux calculer automatiquement le prix de votre séjour en TND.<br><br>
-                💡 <strong>Exemples :</strong><br>
-                • "Devis pour 2 personnes du 15 au 20 décembre"<br>
-                • "Prix pour 3 nuits en demi-pension"<br>
-                • "Tarif all in soft pour 4 personnes en avril"
+        <!-- Interface de chat -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>🤖 Assistant Devis Intelligent</h2>
+                <p>Calcul automatique de vos devis en TND</p>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot-message">
+                    🌟 <strong>Bienvenue à l'Hôtel Tour Khalef !</strong><br><br>
+                    Je suis votre assistant devis personnel. Je peux calculer instantanément le prix de votre séjour en TND.<br><br>
+                    
+                    💡 <strong>Comment utiliser :</strong><br>
+                    • "Devis 2 personnes du 15 au 20 décembre"<br>
+                    • "Prix pour 3 nuits en demi-pension"<br>
+                    • "Tarif all in soft pour 4 personnes"
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input">
+                    <input type="text" id="user-input" 
+                           placeholder="Ex: Devis pour 2 personnes du 15 au 20 décembre en demi-pension..." 
+                           autofocus>
+                    <button class="send-btn" onclick="sendMessage()">
+                        Envoyer →
+                    </button>
+                </div>
             </div>
         </div>
         
-        <div class="chat-input">
-            <input type="text" id="user-input" placeholder="Ex: Devis pour 2 personnes du 15 au 20 décembre..." autofocus>
-            <button onclick="sendMessage()">Envoyer</button>
+        <!-- Exemples rapides -->
+        <div class="examples">
+            <h3>🚀 Exemples rapides :</h3>
+            <div class="example-buttons">
+                <button class="example-btn" onclick="setExample('devis pour 2 personnes du 15 au 22 décembre avec petit déjeuner')">
+                    Décembre - 2 pers - PD
+                </button>
+                <button class="example-btn" onclick="setExample('demi-pension pour 3 personnes en février 7 nuits')">
+                    Février - 3 pers - DP
+                </button>
+                <button class="example-btn" onclick="setExample('all in soft pour 4 personnes en avril')">
+                    Avril - 4 pers - All in
+                </button>
+                <button class="example-btn" onclick="setExample('tarif pour chambre double 5 nuits en mars')">
+                    Mars - Double - 5 nuits
+                </button>
+            </div>
         </div>
-    </div>
-
-    <div class="examples">
-        <p><strong>Exemples rapides :</strong></p>
-        <button class="example-btn" onclick="setExample('devis pour 2 personnes du 15 au 22 décembre avec petit déjeuner')">Décembre - 2 pers - PD</button>
-        <button class="example-btn" onclick="setExample('demi-pension pour 3 personnes en février 7 nuits')">Février - 3 pers - DP</button>
-        <button class="example-btn" onclick="setExample('all in soft pour 4 personnes en avril')">Avril - 4 pers - All in</button>
-    </div>
-
-    <div class="contact-info">
-        <strong>📧 Réservations :</strong> marouane.tefifha@tour-khalef.com<br>
-        <strong>🏨 Hotel Tour Khalef ⭐⭐⭐⭐⭐</strong>
+        
+        <!-- Informations de contact -->
+        <div class="contact-info">
+            <h3>📞 Contactez-nous</h3>
+            <div class="contact-details">
+                <div class="contact-item">
+                    📧 <span>marouane.tefifha@tour-khalef.com</span>
+                </div>
+                <div class="contact-item">
+                    🌐 <span>www.tour-khalef.com</span>
+                </div>
+                <div class="contact-item">
+                    🏨 <span>Hôtel Tour Khalef ⭐⭐⭐⭐⭐</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -261,6 +461,9 @@ def accueil():
             addMessage(message, 'user');
             input.value = '';
             
+            // Afficher indicateur de frappe
+            showTypingIndicator();
+            
             // Envoyer au serveur
             fetch('/chat', {
                 method: 'POST',
@@ -271,10 +474,12 @@ def accueil():
             })
             .then(response => response.json())
             .then(data => {
+                removeTypingIndicator();
                 addMessage(data.reponse, 'bot');
             })
             .catch(error => {
-                addMessage('Désolé, une erreur est survenue.', 'bot');
+                removeTypingIndicator();
+                addMessage('Désolé, une erreur est survenue. Veuillez réessayer.', 'bot');
             });
         }
 
@@ -282,17 +487,37 @@ def accueil():
             const messagesDiv = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
-            messageDiv.innerHTML = text.replace(/\\n/g, '<br>');
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // Enter key support
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('chat-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'message bot-message';
+            typingDiv.innerHTML = '💭 Calcul du devis en cours...';
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
+
+        // Support touche Entrée
         document.getElementById('user-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
             }
         });
+
+        // Focus automatique
+        document.getElementById('user-input').focus();
     </script>
 </body>
 </html>
@@ -322,3 +547,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print("🚀 Assistant Devis Hotel Tour Khalef - Démarrage...")
     app.run(host='0.0.0.0', port=port, debug=False)
+
