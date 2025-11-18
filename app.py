@@ -447,6 +447,7 @@ def accueil():
     </div>
 
     <script>
+            <script>
         function setExample(text) {
             document.getElementById('user-input').value = text;
         }
@@ -519,32 +520,3 @@ def accueil():
         // Focus automatique
         document.getElementById('user-input').focus();
     </script>
-</body>
-</html>
-    """
-
-# ROUTE POUR LE CHAT
-@app.route('/chat', methods=['POST'])
-def chat():
-    data = request.json
-    message_utilisateur = data.get('message', '')
-    
-    reponse_bot = analyser_devis(message_utilisateur)
-    
-    return jsonify({
-        'reponse': reponse_bot,
-        'status': 'success'
-    })
-
-# Route de test existante
-@app.route('/test')
-def tester_analyse():
-    message = request.args.get('message', 'devis pour 2 personnes du 15 au 22 décembre')
-    reponse = analyser_devis(message)
-    return f"<pre>{reponse}</pre>"
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    print("🚀 Assistant Devis Hotel Tour Khalef - Démarrage...")
-    app.run(host='0.0.0.0', port=port, debug=False)
-
