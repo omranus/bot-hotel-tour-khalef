@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Données basées sur votre Excel
+# Données basées sur votre Excel - Prix en TND
 TARIFS = {
     "LPD": [130, 120, 140, 120, 130, 120, 130, 140],
     "HB": [195, 180, 220, 180, 195, 180, 195, 220],
@@ -21,66 +21,93 @@ PERIODES = [
 ]
 
 def analyser_devis(message_texte):
-    """Analyse le message et calcule le devis"""
+    """Analyse le message et calcule le devis - Version focus devis uniquement"""
     print(f"🔍 Analyse du message: {message_texte}")
     
-    # Détection de la durée
+    # Liste des mots-clés liés aux devis
+    mots_cles_devis = [
+        'devis', 'tarif', 'prix', 'réservation', 'réserver', 'séjour', 
+        'nuit', 'nuits', 'personne', 'personnes', 'adulte', 'adultes',
+        'enfant', 'enfants', 'chambre', 'double', 'triple', 'formule',
+        'lpd', 'hb', 'all in', 'demi-pension', 'petit déjeuner',
+        'janvier', 'février', 'mars', 'avril', 'novembre', 'décembre',
+        'du', 'au', 'pour'
+    ]
+    
+    # Vérifier si le message concerne un devis
+    message_lower = message_texte.lower()
+    concerne_devis = any(mot in message_lower for mot in mots_cles_devis)
+    
+    if not concerne_devis:
+        return "❌ **Désolé, je suis un assistant spécialisé dans les devis.**\n\nJe peux vous aider à calculer le prix d'un séjour, mais je ne peux pas répondre à d'autres questions.\n\n💡 **Exemple de demande :** 'Devis pour 2 personnes du 15 au 20 décembre en demi-pension'"
+    
+    # === DÉTECTION DE LA DURÉE ===
     duree_sejour = 7
     pattern_dates = r'du\s*(\d{1,2})\s*au\s*(\d{1,2})\s*(\w+)'
-    match_dates = re.search(pattern_dates, message_texte.lower())
+    match_dates = re.search(pattern_dates, message_lower)
     
     if match_dates:
         date_debut = int(match_dates.group(1))
         date_fin = int(match_dates.group(2))
         duree_sejour = date_fin - date_debut
+        print(f"📅 Durée détectée : {duree_sejour} nuits")
     else:
         pattern_nuits = r'(\d+)\s*(?:nuit|jour)'
-        match_nuits = re.search(pattern_nuits, message_texte)
+        match_nuits = re.search(pattern_nuits, message_lower)
         if match_nuits:
             duree_sejour = int(match_nuits.group(1))
+            print(f"📅 Durée détectée : {duree_sejour} nuits")
 
-    # Détection formule
+    # === DÉTECTION FORMULE ===
     formule = "LPD"
-    if "demi-pension" in message_texte.lower() or "hb" in message_texte.lower():
+    if "demi-pension" in message_lower or "hb" in message_lower:
         formule = "HB"
-    elif "all in soft" in message_texte.lower():
+    elif "all in soft" in message_lower:
         formule = "All in soft" 
-    elif "all in" in message_texte.lower():
+    elif "all in" in message_lower:
         formule = "All in"
-    elif "petit déjeuner" in message_texte.lower() or "pd" in message_texte.lower():
+    elif "petit déjeuner" in message_lower or "pd" in message_lower:
         formule = "LPD"
 
-    # Détection période
-    periode_index = 2  # Décembre par défaut
-    if "novembre" in message_texte.lower(): periodo_index = 0
-    elif "décembre" in message_texte.lower() or "dec" in message_texte.lower(): periodo_index = 2
-    elif "janvier" in message_texte.lower(): periodo_index = 3
-    elif "février" in message_texte.lower() or "fevrier" in message_texte.lower(): periodo_index = 4
-    elif "mars" in message_texte.lower(): periodo_index = 6
-    elif "avril" in message_texte.lower(): periodo_index = 7
+    print(f"📋 Formule détectée : {formule}")
 
-    # Détection personnes
-    personnes = re.search(r'(\d+)\s*(?:personne|adulte|voyageur)', message_texte)
+    # === DÉTECTION PÉRIODE ===
+    periode_index = 2
+    if "novembre" in message_lower: periodo_index = 0
+    elif "décembre" in message_lower or "dec" in message_lower: periodo_index = 2
+    elif "janvier" in message_lower: periodo_index = 3
+    elif "février" in message_lower or "fevrier" in message_lower: periodo_index = 4
+    elif "mars" in message_lower: periodo_index = 6
+    elif "avril" in message_lower: periodo_index = 7
+
+    print(f"📅 Période : {PERIODES[periode_index]}")
+    print(f"💰 Prix par personne : {TARIFS[formule][periode_index]} TND")
+
+    # === CALCUL DU PRIX ===
+    prix_par_personne = TARIFS[formule][periode_index]
+
+    # Compter les personnes
+    personnes = re.search(r'(\d+)\s*(?:personne|adulte|voyageur)', message_lower)
     nb_personnes = int(personnes.group(1)) if personnes else 2
 
-    # Calcul
-    prix_par_personne = TARIFS[formule][periode_index]
     prix_total = prix_par_personne * nb_personnes * duree_sejour
 
-    # Préparation réponse
+    # === PRÉPARATION RÉPONSE ===
     reponse = f"""🏨 **HOTEL TOUR KHALEF** ⭐⭐⭐⭐⭐
+*Assistant Devis Automatique*
 
 📋 **Formule :** {formule}
 📅 **Période :** {PERIODES[periode_index]}
 👥 **Personnes :** {nb_personnes}
 🌙 **Nuits :** {duree_sejour}
 
-💰 **DEVIS : {prix_total}€**
+💰 **DEVIS ESTIMÉ : {prix_total} TND**
 
-📞 Notre équipe vous contacte sous 30 minutes pour confirmation !
+📧 **Réservations :** marouane.tefifha@tour-khalef.com
+📞 **Notre équipe vous contacte sous 30 minutes pour confirmation !**
 
-ℹ️ _Tarifs selon grille Winter 2025-2026_"""
-    
+_⚠️ Ce calcul est une estimation basée sur nos tarifs Winter 2025-2026_"""
+
     return reponse
 
 # PAGE PRINCIPALE AVEC CHAT
@@ -90,7 +117,7 @@ def accueil():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat Bot - Hotel Tour Khalef</title>
+    <title>Assistant Devis - Hotel Tour Khalef</title>
     <meta charset="UTF-8">
     <style>
         body {
@@ -174,33 +201,49 @@ def accueil():
             cursor: pointer;
             font-size: 12px;
         }
+        .contact-info {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
             <h2>🤖 Hotel Tour Khalef - Assistant Devis</h2>
-            <p>Je vous aide à calculer votre devis automatiquement</p>
+            <p>Je calcule automatiquement vos devis en TND</p>
         </div>
         
         <div class="chat-messages" id="chat-messages">
             <div class="message bot-message">
-                👋 Bonjour ! Je suis l'assistant de l'Hotel Tour Khalef.<br>
-                Dites-moi votre demande de séjour et je vous préparerai un devis immédiatement !
+                👋 Bonjour ! Je suis l'assistant devis de l'Hotel Tour Khalef.<br>
+                Je peux calculer automatiquement le prix de votre séjour en TND.<br><br>
+                💡 <strong>Exemples :</strong><br>
+                • "Devis pour 2 personnes du 15 au 20 décembre"<br>
+                • "Prix pour 3 nuits en demi-pension"<br>
+                • "Tarif all in soft pour 4 personnes en avril"
             </div>
         </div>
         
         <div class="chat-input">
-            <input type="text" id="user-input" placeholder="Ex: Je veux réserver du 15 au 20 décembre pour 2 personnes..." autofocus>
+            <input type="text" id="user-input" placeholder="Ex: Devis pour 2 personnes du 15 au 20 décembre..." autofocus>
             <button onclick="sendMessage()">Envoyer</button>
         </div>
     </div>
 
     <div class="examples">
         <p><strong>Exemples rapides :</strong></p>
-        <button class="example-btn" onclick="setExample('du 15 au 22 décembre pour 2 personnes avec petit déjeuner')">Décembre - 2 pers - PD</button>
+        <button class="example-btn" onclick="setExample('devis pour 2 personnes du 15 au 22 décembre avec petit déjeuner')">Décembre - 2 pers - PD</button>
         <button class="example-btn" onclick="setExample('demi-pension pour 3 personnes en février 7 nuits')">Février - 3 pers - DP</button>
         <button class="example-btn" onclick="setExample('all in soft pour 4 personnes en avril')">Avril - 4 pers - All in</button>
+    </div>
+
+    <div class="contact-info">
+        <strong>📧 Réservations :</strong> marouane.tefifha@tour-khalef.com<br>
+        <strong>🏨 Hotel Tour Khalef ⭐⭐⭐⭐⭐</strong>
     </div>
 
     <script>
@@ -271,11 +314,11 @@ def chat():
 # Route de test existante
 @app.route('/test')
 def tester_analyse():
-    message = request.args.get('message', 'du 15 au 22 décembre pour 2 personnes')
+    message = request.args.get('message', 'devis pour 2 personnes du 15 au 22 décembre')
     reponse = analyser_devis(message)
     return f"<pre>{reponse}</pre>"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print("🚀 Bot Chat Hotel Tour Khalef - Démarrage...")
+    print("🚀 Assistant Devis Hotel Tour Khalef - Démarrage...")
     app.run(host='0.0.0.0', port=port, debug=False)
